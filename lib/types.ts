@@ -1,0 +1,9 @@
+export type Source = "whatsapp" | "email" | "meeting";
+export type Status = "open" | "in_progress" | "resolved" | "blocked";
+export type Item = { id:string; title:string; description:string; status:Status; priority?:"low"|"medium"|"high"; owner?:string; source:Source; sourceMessageId:string; timestamp:string; relatedTopics:string[]; dependencies?:string[] };
+export type Conflict = { id:string; topic:string; status?:Status; sideA:{statement:string;owner:string;sourceMessageId:string}; sideB:{statement:string;owner:string;sourceMessageId:string}; recommendedAction:string };
+export type ProjectState = { summary:string; decisions:Item[]; actionItems:Item[]; pendingDecisions:Item[]; blockers:Item[]; risks:Item[]; deadlines:Item[]; updates:Item[]; conflicts:Conflict[]; people:{name:string;role:string;openItems:string[]}[] };
+export type Message = { id:string; source:Source; sender:string; content:string; timestamp:string; tags:string[]; label?:string };
+export type Snapshot = { id:string; createdAt:string; state:ProjectState; changes:string[] };
+export type ProjectData = { messages:Message[]; snapshots:Snapshot[] };
+export const emptyState:ProjectState = { summary:"No communication has been analysed yet.", decisions:[], actionItems:[], pendingDecisions:[], blockers:[], risks:[], deadlines:[], updates:[], conflicts:[], people:[] };
