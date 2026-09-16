@@ -92,6 +92,56 @@ export function Dashboard({
           );
         })}
 
+      {/* People & Responsibilities Section */}
+      {state.actionItems && state.actionItems.filter((x) => x.status !== "resolved").length > 0 && (
+        <section className="card wide" style={{ marginBottom: 24 }}>
+          <h2>People & Responsibilities</h2>
+          {(() => {
+            // Group action items by owner
+            const byOwner = new Map<string, { role?: string; items: typeof state.actionItems }>();
+            state.actionItems
+              .filter((x) => x.status !== "resolved")
+              .forEach((item) => {
+                const owner = item.owner || "Unassigned";
+                if (!byOwner.has(owner)) {
+                  byOwner.set(owner, { role: item.ownerRole, items: [] });
+                }
+                byOwner.get(owner)!.items.push(item);
+              });
+
+            return Array.from(byOwner.entries()).map(([owner, { role, items }]) => (
+              <div key={owner} style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)", marginBottom: 6 }}>
+                  {owner}
+                  {role && (
+                    <span style={{ fontWeight: 400, color: "var(--ink-light)", marginLeft: 8 }}>
+                      — {role}
+                    </span>
+                  )}
+                </div>
+                <ul style={{ margin: 0, paddingLeft: 20, color: "var(--ink)" }}>
+                  {items.map((item) => (
+                    <li key={item.id} style={{ marginBottom: 4, fontSize: 14 }}>
+                      {item.title}
+                      {item.dueDate && (
+                        <span style={{ color: "var(--amber)", marginLeft: 8, fontSize: 13 }}>
+                          (Due: {item.dueDate})
+                        </span>
+                      )}
+                      {item.status === "waiting" && item.dependencies && item.dependencies.length > 0 && (
+                        <span style={{ color: "var(--ink-light)", marginLeft: 8, fontSize: 13 }}>
+                          (Waiting for: {item.dependencies[0]})
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ));
+          })()}
+        </section>
+      )}
+
       <div className="grid">
         <StateCard
           title="Current blockers"

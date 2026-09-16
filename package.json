@@ -14,6 +14,7 @@
     "db:studio": "node node_modules/prisma/build/index.js studio"
   },
   "dependencies": {
+    "@google/genai": "^2.22.0",
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^5.22.0",
     "groq-sdk": "^1.6.0",

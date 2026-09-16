@@ -1,0 +1,20 @@
+[14 Sep, 4:02 PM] Mrs. Sharma (Client):
+Hi, we visited the site today and honestly I don't like the marble we selected for the kitchen. It looks too yellow in daylight.
+
+[14 Sep, 4:05 PM] Rohan (Architect):
+Understood. I'll pull two alternative marble options for you by tomorrow.
+
+[14 Sep, 4:06 PM] Mrs. Sharma (Client):
+Okay, but please don't start any installation until I've approved the new one.
+
+[14 Sep, 4:10 PM] Vikram (Contractor):
+Just to flag — my team was planning to start the kitchen installation this coming Monday, materials are already allocated.
+
+[14 Sep, 4:12 PM] Rohan (Architect):
+Vikram, please hold the installation for now. We're waiting on the client's approval for the marble.
+
+[14 Sep, 4:13 PM] Vikram (Contractor):
+Got it, holding for now. Let me know as soon as it's confirmed.
+
+[14 Sep, 6:45 PM] Rohan (Architect):
+Mrs. Sharma, I've reached out to our supplier for alternatives, should have options for you tomorrow morning.
