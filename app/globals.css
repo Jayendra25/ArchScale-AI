@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+.loading-spinner { animation: loading-spinner 1s linear infinite; }
+@keyframes loading-spinner { to { transform: rotate(360deg); } }
+
 :root { --ink:#14242a; --muted:#64787c; --line:#dce5e3; --surface:#f8faf9; --teal:#077d79; --teal-dark:#056663; --coral:#db6a4c; --amber:#d99027; }
 * { box-sizing:border-box } body { margin:0; background:var(--surface); color:var(--ink); font-family:Arial, Helvetica, sans-serif; }
 button,input,textarea,select { font:inherit } button { cursor:pointer } 

@@ -169,7 +169,7 @@ export function HomeClient({ initialProjects }: Props) {
         >
           {demobusy ? (
             <>
-              <LoaderCircle size={15} style={{ verticalAlign: "middle", marginRight: 6 }} />
+              <LoaderCircle size={15} className="loading-spinner" style={{ verticalAlign: "middle", marginRight: 6 }} />
               Setting up demo…
             </>
           ) : (
@@ -223,7 +223,7 @@ export function HomeClient({ initialProjects }: Props) {
               >
                 {busy ? (
                   <>
-                    <LoaderCircle size={15} style={{ verticalAlign: "middle", marginRight: 6 }} />
+                    <LoaderCircle size={15} className="loading-spinner" style={{ verticalAlign: "middle", marginRight: 6 }} />
                     Creating…
                   </>
                 ) : (

@@ -15,6 +15,7 @@ import {
 import { AppShell } from "./AppShell";
 import { SourceDrawer } from "./SourceDrawer";
 import { Dashboard } from "./Dashboard";
+import LoadingScreen from "./LoadingScreen";
 import type { Message, Snapshot, Source } from "@/lib/types";
 
 type View = "dashboard" | "inbox" | "import" | "changes" | "ask";
@@ -261,12 +262,15 @@ function Import({
       router.push(`/projects/${projectId}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Analysis failed — try again.");
+    } finally {
       setBusy(false);
     }
   };
 
   return (
-    <div className="import-grid">
+    <>
+      {busy && <LoadingScreen message="Analyzing communication..." />}
+      <div className="import-grid">
       <section className="card">
         <div className="row">
           <span className="source-icon">
@@ -337,6 +341,7 @@ function Import({
             <>
               <LoaderCircle
                 size={15}
+                className="loading-spinner"
                 style={{ verticalAlign: "middle", marginRight: 7 }}
               />
               Detecting changes…
@@ -388,7 +393,8 @@ function Import({
           workflow.
         </p>
       </aside>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -477,7 +483,9 @@ function Ask({
   };
 
   return (
-    <div className="chat">
+    <>
+      {busy && <LoadingScreen message="Thinking..." />}
+      <div className="chat">
       <section className="card">
         <div className="row">
           <span className="source-icon">
@@ -514,7 +522,7 @@ function Ask({
             onClick={ask}
             id="ask-submit"
           >
-            {busy ? <LoaderCircle size={17} /> : <Send size={17} />}
+            {busy ? <LoaderCircle size={17} className="loading-spinner" /> : <Send size={17} />}
           </button>
         </div>
         {!messages.length && (
@@ -546,6 +554,7 @@ function Ask({
           </div>
         </section>
       )}
-    </div>
+      </div>
+    </>
   );
 }
