@@ -14,6 +14,13 @@ export type LLMResult = {
   provider: "gemini" | "groq" | "none";
 };
 
+export type LLMJsonResult<T> = {
+  data: T | null;
+  provider: "gemini" | "groq" | "none";
+  /** Safe, user-displayable explanation when no AI response passed validation. */
+  error?: string;
+};
+
 /** Wrap any promise with a hard timeout. Rejects with the given message after ms. */
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -40,6 +47,9 @@ async function callGemini(
       systemInstruction: systemPrompt,
       responseMimeType: "application/json",
       temperature: 0.2,
+      // A structured project state can contain many independently supported
+      // events. Do not let a tiny provider default cut JSON off mid-array.
+      maxOutputTokens: 8192,
     },
     contents: userPrompt,
   });
@@ -67,6 +77,7 @@ async function callGroq(
     ],
     temperature: 0.2,
     response_format: { type: "json_object" },
+    max_completion_tokens: 8192,
   }) as Promise<{ choices: Array<{ message: { content: string | null } }> }>;
 
   const completion = await withTimeout(call, 25_000, "Groq");
@@ -126,4 +137,47 @@ export function parseLLMJson<T>(text: string): T | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Call the provider chain for a structured response. A syntactically valid but
+ * incomplete response is treated as a failed attempt, so Gemini's malformed
+ * JSON can still fall through to Groq rather than silently losing categories.
+ */
+export async function callLLMJson<T>(
+  systemPrompt: string,
+  userPrompt: string,
+  isValid: (value: unknown) => value is T
+): Promise<LLMJsonResult<T>> {
+  const attempts: Array<{
+    provider: "gemini" | "groq";
+    call: () => Promise<string>;
+  }> = [
+    { provider: "gemini", call: () => callGemini(systemPrompt, userPrompt) },
+    { provider: "groq", call: () => callGroq(systemPrompt, userPrompt) },
+  ];
+  const errors: string[] = [];
+
+  for (const attempt of attempts) {
+    try {
+      console.log(`[LLM] Attempting ${attempt.provider} structured extraction...`);
+      const text = await attempt.call();
+      const parsed = parseLLMJson<unknown>(text);
+      if (!isValid(parsed)) {
+        throw new Error("returned JSON that did not contain the complete extraction schema");
+      }
+      console.log(`[LLM] ✓ ${attempt.provider} returned a complete structured response`);
+      return { data: parsed, provider: attempt.provider };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      errors.push(`${attempt.provider}: ${message}`);
+      console.warn(`[LLM] ${attempt.provider} structured extraction failed: ${message}`);
+    }
+  }
+
+  return {
+    data: null,
+    provider: "none",
+    error: `AI extraction was unavailable or invalid (${errors.join("; ")})`,
+  };
 }

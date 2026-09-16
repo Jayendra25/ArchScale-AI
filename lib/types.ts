@@ -30,12 +30,25 @@ export type Item = {
   type?: ActionItemType;
   /** Due date for action items */
   dueDate?: string;
+  /** How strongly the source communication supports this item. */
+  basis?: "explicit" | "implied" | "inferred";
+  /** For blockers, the concrete condition that will clear the blocker. */
+  resolution?: string;
   /**
    * Normalized semantic key used for event deduplication.
    * Format: "type:topic_word1:topic_word2:..."
    * Allows recognising the same logical event even when described differently.
    */
   eventKey?: string;
+};
+
+export type Person = {
+  name: string;
+  role: string;
+  openItems: string[];
+  /** Source message(s) that establish the person's project role. */
+  sourceMessageId?: string;
+  sourceMessageIds?: string[];
 };
 
 export type Conflict = {
@@ -59,7 +72,7 @@ export type ProjectState = {
   deadlines: Item[];
   updates: Item[];
   conflicts: Conflict[];
-  people: { name: string; role: string; openItems: string[] }[];
+  people: Person[];
 };
 
 export type Message = {

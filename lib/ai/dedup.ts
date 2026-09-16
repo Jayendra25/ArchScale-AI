@@ -320,13 +320,18 @@ export function smartMergeItems(
         status,
         priority: (raw.priority ?? "medium") as "low" | "medium" | "high",
         owner: raw.owner,
+        ownerRole: raw.ownerRole,
         source: (raw.source ?? "whatsapp") as Source,
         sourceMessageId: raw.sourceMessageId ?? latestMsgId,
-        sourceMessageIds: [raw.sourceMessageId ?? latestMsgId],
+        sourceMessageIds: uniqueSourceIds(raw, latestMsgId),
         timestamp: new Date().toISOString(),
         relatedTopics: raw.relatedTopics ?? [],
         dependencies: raw.dependencies ?? [],
         eventKey,
+        type: raw.type,
+        dueDate: raw.dueDate,
+        basis: raw.basis,
+        resolution: raw.resolution,
       };
       merged.push(newItem);
       mergeChanges.push({ type: "created", item: newItem });
@@ -338,10 +343,17 @@ export function smartMergeItems(
         ...prev,
         status,
         description: description || prev.description,
+        owner: raw.owner ?? prev.owner,
+        ownerRole: raw.ownerRole ?? prev.ownerRole,
+        type: raw.type ?? prev.type,
+        dueDate: raw.dueDate ?? prev.dueDate,
+        dependencies: raw.dependencies?.length ? raw.dependencies : prev.dependencies,
+        basis: raw.basis ?? prev.basis,
+        resolution: raw.resolution ?? prev.resolution,
         eventKey,
         sourceMessageIds: [
           ...(prev.sourceMessageIds ?? [prev.sourceMessageId]),
-          latestMsgId,
+          ...uniqueSourceIds(raw, latestMsgId),
         ],
       };
       mergeChanges.push({
@@ -355,15 +367,18 @@ export function smartMergeItems(
       // Link the new message as an additional source reference
       const prev = merged[decision.existingIndex];
       const existing_sources = prev.sourceMessageIds ?? [prev.sourceMessageId];
-      if (!existing_sources.includes(latestMsgId)) {
+      const addedSources = uniqueSourceIds(raw, latestMsgId).filter(
+        (sourceId) => !existing_sources.includes(sourceId)
+      );
+      if (addedSources.length) {
         merged[decision.existingIndex] = {
           ...prev,
-          sourceMessageIds: [...existing_sources, latestMsgId],
+          sourceMessageIds: [...existing_sources, ...addedSources],
         };
         mergeChanges.push({
           type: "source-added",
           item: merged[decision.existingIndex],
-          messageId: latestMsgId,
+          messageId: addedSources[0],
         });
         console.log(`[Dedup] ADD-SOURCE ${category}: "${prev.title}" ← msg ${latestMsgId}`);
       } else {
@@ -377,6 +392,14 @@ export function smartMergeItems(
   }
 
   return { merged, mergeChanges };
+}
+
+function uniqueSourceIds(raw: Partial<Item>, fallback: string): string[] {
+  return [...new Set([
+    ...(raw.sourceMessageIds ?? []),
+    ...(raw.sourceMessageId ? [raw.sourceMessageId] : []),
+    fallback,
+  ])];
 }
 
 // ============================================================================
