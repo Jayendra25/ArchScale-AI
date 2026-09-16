@@ -112,12 +112,7 @@ export function Dashboard({
             return Array.from(byOwner.entries()).map(([owner, { role, items }]) => (
               <div key={owner} style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)", marginBottom: 6 }}>
-                  {owner}
-                  {role && (
-                    <span style={{ fontWeight: 400, color: "var(--ink-light)", marginLeft: 8 }}>
-                      — {role}
-                    </span>
-                  )}
+                  {role ? `${role} — ${owner}` : owner}
                 </div>
                 <ul style={{ margin: 0, paddingLeft: 20, color: "var(--ink)" }}>
                   {items.map((item) => (

@@ -31,13 +31,7 @@ export function StateCard({
                     marginBottom: 6,
                   }}
                 >
-                  Owner: {x.owner}
-                  {x.ownerRole && (
-                    <span style={{ color: "var(--ink-light)", fontWeight: 400 }}>
-                      {" "}
-                      — {x.ownerRole}
-                    </span>
-                  )}
+                  {x.ownerRole ? `${x.ownerRole} — ${x.owner}` : x.owner}
                 </div>
               )}
               <div className="item-text">{x.description}</div>

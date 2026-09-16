@@ -27,7 +27,7 @@ Return ONLY one valid JSON object — no markdown. It must contain every key bel
   "changes":["new information in this import"]
 }
 
-ITEM fields: "title", "description", "owner", "ownerRole", "status", "priority", "eventKey", "sourceMessageIds", and "basis". Use sourceMessageIds only from the supplied [Source message ID: ...] labels; cite all relevant supplied messages. "basis" is exactly "explicit", "implied", or "inferred". Action items additionally use "type" (assigned_task|approval_required|follow_up|waiting_action|coordination|delivery|review), optional "dueDate", and "dependencies". Blockers additionally use "resolution". A blocker title is the work that is blocked; its description is the reason; owner/ownerRole are the affected party, not the party at fault. CONFLICT has topic, sideA/sideB (each including statement, owner, sourceMessageId), recommendedAction, eventKey, and basis.
+ITEM fields: "title", "description", "owner", "ownerRole", "status", "priority", "eventKey", "sourceMessageIds", and "basis". Use sourceMessageIds only from the supplied [Source message ID: ...] labels; cite all relevant supplied messages. "basis" is exactly "explicit", "implied", or "inferred". Action items additionally use "type" (assigned_task|approval_required|follow_up|waiting_action|coordination|delivery|review), optional "dueDate", and "dependencies". Blockers: title is the work that is blocked; description explains why; owner/ownerRole are THE PERSON WHO CAN RESOLVE THE BLOCKER (not the person blocked); use "dependencies" for what it's waiting for. CONFLICT has topic, sideA/sideB (each including statement, owner, sourceMessageId), recommendedAction, eventKey, and basis.
 
 Coverage requirements:
 - In this same response, populate every relevant top-level category: summary, people, decisions, actionItems, pendingDecisions, blockers, risks, deadlines, updates, dependencies, conflicts. Never omit a category merely because another category has entries.
@@ -239,9 +239,8 @@ function ruleBasedExtraction(
       })
     );
     state.blockers.push(
-      mkItem("blocker", "Kitchen installation on hold", "Client approval of the replacement marble is pending.", contractor.name, {
-        ownerRole: contractor.role, status: "blocked", priority: "high", dependencies: ["Client approval of replacement marble"],
-        resolution: "Client approves the replacement marble.",
+      mkItem("blocker", "Kitchen installation blocked pending marble approval", "Installation cannot proceed because the client has not yet approved a replacement for the rejected marble.", client.name, {
+        ownerRole: client.role, status: "blocked", priority: "high", dependencies: ["Client marble selection and approval"],
       })
     );
     state.risks.push(
@@ -273,8 +272,8 @@ function ruleBasedExtraction(
     }));
     // Emit status transitions as deltas; smartMergeItems updates the current
     // state while the snapshot's changes preserve the historical transition.
-    state.blockers.push(mkItem("blocker", "Kitchen installation on hold", "Client approval of the replacement marble has been received.", contractor.name, {
-      ownerRole: contractor.role, status: "resolved", priority: "high", resolution: "Client approved Option B marble.",
+    state.blockers.push(mkItem("blocker", "Kitchen installation blocked pending marble approval", "Installation was blocked but client has now approved the replacement marble.", client.name, {
+      ownerRole: client.role, status: "resolved", priority: "high",
     }));
     state.actionItems.push(
       mkItem("action", "Review and approve replacement kitchen marble", "The client approved Option B marble.", client.name, {
