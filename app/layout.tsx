@@ -1,4 +1,5 @@
-
+import "./globals.css";
+import "./theme.css";
 import type { Metadata } from "next";
 import { Inter, Manrope } from "next/font/google";
 
