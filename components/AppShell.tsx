@@ -29,7 +29,7 @@ export function AppShell({
             <Building2 size={19} />
           </span>
           ArchFlow{" "}
-          <span style={{ color: "#7b9290", fontWeight: 500 }}>AI</span>
+          <span style={{ color: "#9aa0ac", fontWeight: 500 }}>AI</span>
         </Link>
         <div className="navlinks">
           {tabs.map(([name, suffix]) => (

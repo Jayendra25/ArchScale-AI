@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 
 // GET /api/projects — list all projects with latest snapshot summary
 export async function GET() {
@@ -53,6 +54,8 @@ export async function POST(req: Request) {
         description: body.description?.trim() || null,
       },
     });
+
+    revalidatePath("/");
 
     return NextResponse.json({ id: project.id, name: project.name }, { status: 201 });
   } catch (err) {

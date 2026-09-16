@@ -12,9 +12,18 @@ export default async function ProjectLayout({
   const { id } = await params;
   const project = await prisma.project.findUnique({
     where: { id },
-    select: { name: true },
+    select: {
+      name: true,
+      _count: { select: { messages: true, batches: true } },
+    },
   });
   if (!project) notFound();
 
-  return <ProjectClient projectId={id} projectName={project.name} />;
+  return (
+    <ProjectClient
+      projectId={id}
+      projectName={project.name}
+      hasProjectData={project._count.messages > 0 || project._count.batches > 0}
+    />
+  );
 }

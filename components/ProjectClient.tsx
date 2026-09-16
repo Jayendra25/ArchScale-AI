@@ -16,14 +16,17 @@ import { AppShell } from "./AppShell";
 import { SourceDrawer } from "./SourceDrawer";
 import { Dashboard } from "./Dashboard";
 import LoadingScreen from "./LoadingScreen";
+import { ImportCommunicationButton } from "./ImportCommunicationButton";
 import type { Message, Snapshot, Source } from "@/lib/types";
 
 export function ProjectClient({
   projectId,
   projectName,
+  hasProjectData,
 }: {
   projectId: string;
   projectName?: string;
+  hasProjectData?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -69,13 +72,18 @@ export function ProjectClient({
   }, [projectId, projectName]);
 
   useEffect(() => {
+    if (hasProjectData === false) {
+      setLoading(false);
+      return;
+    }
     load();
-  }, [load]);
+  }, [hasProjectData, load]);
 
   const state = snapshots.at(-1)?.state ?? null;
 
   return (
     <AppShell projectId={projectId}>
+      <ThemeVars />
       <header className="top">
         <div>
           <div className="project-label">Project workspace</div>
@@ -84,10 +92,8 @@ export function ProjectClient({
             {state?.summary ?? "A source-traceable record of project communication."}
           </p>
         </div>
-        {view !== "import" && (
-          <Link href={`/projects/${projectId}/import`} className="button">
-            Import communication
-          </Link>
+        {view === "dashboard" && (
+          <ImportCommunicationButton projectId={projectId} />
         )}
       </header>
 
@@ -108,7 +114,6 @@ export function ProjectClient({
             base={base}
             projectId={projectId}
             onComplete={load}
-            batches={snapshots.length}
           />
         )}
         {view === "changes" && <Changes snapshots={snapshots} />}
@@ -119,6 +124,113 @@ export function ProjectClient({
 
       <SourceDrawer message={drawer} onClose={() => setDrawer(null)} />
     </AppShell>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Theme — overrides the app's existing CSS variables and a few shared
+// classNames (.button, .pill, .chip, .field inputs, etc.) with the modern
+// violet/coral palette used on the home page. Rendered once here, inside
+// AppShell, so it applies no matter which tab (dashboard/inbox/import/
+// changes/ask) is active.
+// ---------------------------------------------------------------------------
+function ThemeVars() {
+  return (
+    <style jsx global>{`
+      :root {
+        --ink: #1c1b29;
+        --ink-light: #6b7280;
+        --amber: #d97706;
+        --coral: #e0563a;
+        --primary: #6d5dfc;
+        --border: #e4e4ec;
+        --bg: #f8f8fb;
+      }
+
+      .card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: none;
+      }
+
+      .button {
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: background 0.15s ease, transform 0.12s ease;
+      }
+      .button:hover:not(:disabled) {
+        background: #5b4ce0;
+        transform: translateY(-1px);
+      }
+      .button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .linkbutton {
+        color: var(--primary);
+      }
+      .linkbutton:hover {
+        color: #5b4ce0;
+      }
+
+      .pill.open {
+        background: rgba(109, 93, 252, 0.12);
+        color: var(--primary);
+        border-radius: 999px;
+      }
+
+      .chip {
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: #fff;
+        color: var(--ink);
+      }
+      .chip:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+
+      .field input,
+      .field select,
+      .field textarea,
+      .filters input,
+      .filters select,
+      .question input {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fff;
+      }
+      .field input:focus-visible,
+      .field select:focus-visible,
+      .field textarea:focus-visible,
+      .filters input:focus-visible,
+      .filters select:focus-visible,
+      .question input:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 1px;
+      }
+
+      .message,
+      .stat,
+      .answer.section {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+      }
+
+      .source-icon {
+        color: var(--primary);
+      }
+
+      .loading-spinner {
+        color: var(--primary);
+      }
+    `}</style>
   );
 }
 
@@ -212,12 +324,10 @@ function Import({
   base,
   projectId,
   onComplete,
-  batches,
 }: {
   base: string;
   projectId: string;
   onComplete: () => void;
-  batches: number;
 }) {
   const router = useRouter();
   const [source, setSource] = useState<Source>("whatsapp");
@@ -237,30 +347,21 @@ function Import({
     setLabel(file.name.replace(/\.txt$/i, ""));
   };
 
-  const analyze = async (seed = false) => {
+  const analyze = async () => {
     setBusy(true);
     setError("");
     try {
-      let r: Response;
-      if (seed) {
-        r = await fetch(`${base}/seed-demo`, { method: "POST" });
-      } else {
-        r = await fetch(`${base}/import`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ source, rawText: text, label }),
-        });
-      }
+      const r = await fetch(`${base}/import`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source, rawText: text, label }),
+      });
 
       const d = await r.json();
 
       if (!r.ok) {
         throw new Error(d.error || "Analysis failed — try again.");
       }
-      if (d.done) {
-        throw new Error("All three demo imports are already loaded.");
-      }
-
       // Success: reset form, reload state, navigate to dashboard
       setText("");
       setLabel("");
@@ -333,72 +434,38 @@ function Import({
           />
         </div>
         {error && (
-          <p style={{ color: "#b1482d", fontSize: 13, margin: "0 0 10px" }}>
+          <p style={{ color: "var(--coral)", fontSize: 13, margin: "0 0 10px" }}>
             {error}
           </p>
         )}
         <button
-          className="button"
-          disabled={!text.trim() || busy}
-          onClick={() => analyze()}
-          id="analyze-btn"
-        >
-          {busy ? (
-            <>
-              <LoaderCircle
-                size={15}
-                className="loading-spinner"
-                style={{ verticalAlign: "middle", marginRight: 7 }}
-              />
-              Detecting changes…
-            </>
-          ) : (
-            <>
-              <Sparkles
-                size={15}
-                style={{ verticalAlign: "middle", marginRight: 7 }}
-              />
-              Analyze communication
-            </>
-          )}
-        </button>
+  className="button w-full sm:w-auto whitespace-nowrap"
+  disabled={!text.trim() || busy}
+  onClick={() => analyze()}
+  id="analyze-btn"
+>
+  {busy ? (
+    <>
+      <LoaderCircle
+        size={15}
+        className="loading-spinner inline-block"
+        style={{ marginRight: 7 }}
+      />
+      Detecting changes…
+    </>
+  ) : (
+    <>
+      <Sparkles
+        size={15}
+        className="inline-block"
+        style={{ marginRight: 7 }}
+      />
+      Analyze communication
+    </>
+  )}
+</button>
       </section>
 
-      <aside className="card">
-        <h2>Demo walkthrough</h2>
-        <p className="sub">
-          Load the three Sharma Residence imports one at a time. Each uses the
-          same import pipeline.
-        </p>
-        <div className="item">
-          <div className="item-title">1. Initial hold</div>
-          <div className="item-text">Marble rejection and the installation blocker.</div>
-        </div>
-        <div className="item">
-          <div className="item-title">2. Conflict surfaces</div>
-          <div className="item-text">
-            Supplier options plus a Monday-start contradiction.
-          </div>
-        </div>
-        <div className="item">
-          <div className="item-title">3. Approval resolves it</div>
-          <div className="item-text">Option B is approved and the state evolves.</div>
-        </div>
-        <button
-          className="button warn"
-          style={{ width: "100%", marginTop: 18 }}
-          disabled={busy || batches >= 3}
-          onClick={() => analyze(true)}
-          id="load-demo-step-btn"
-        >
-          {batches >= 3 ? "Demo complete" : `Load demo step ${batches + 1}`}
-        </button>
-        <p className="sub" style={{ fontSize: 12, marginTop: 12 }}>
-          Upload supports .txt. Paste text is the priority path; PDF/DOCX
-          support can be added with a server-side parser without changing the
-          workflow.
-        </p>
-      </aside>
       </div>
     </>
   );
@@ -537,7 +604,7 @@ function Ask({
           </p>
         )}
         {error && (
-          <p style={{ color: "#b1482d", fontSize: 13, marginTop: 8 }}>{error}</p>
+          <p style={{ color: "var(--coral)", fontSize: 13, marginTop: 8 }}>{error}</p>
         )}
       </section>
       {answerText && (
