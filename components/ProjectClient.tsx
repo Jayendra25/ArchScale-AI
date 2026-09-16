@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Upload,
@@ -18,18 +18,24 @@ import { Dashboard } from "./Dashboard";
 import LoadingScreen from "./LoadingScreen";
 import type { Message, Snapshot, Source } from "@/lib/types";
 
-type View = "dashboard" | "inbox" | "import" | "changes" | "ask";
-
 export function ProjectClient({
-  view,
   projectId,
   projectName,
 }: {
-  view: View;
   projectId: string;
   projectName?: string;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const view = pathname.endsWith("/inbox")
+    ? "inbox"
+    : pathname.endsWith("/import")
+    ? "import"
+    : pathname.endsWith("/changes")
+    ? "changes"
+    : pathname.endsWith("/ask")
+    ? "ask"
+    : "dashboard";
   const base = `/api/projects/${projectId}`;
 
   const [messages, setMessages] = useState<Message[]>([]);
